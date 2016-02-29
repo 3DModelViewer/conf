@@ -41,10 +41,9 @@ func GetAppConf() *conf {
 		RootMux: 	wall,
 		Log: log,
 		FullUrlBase:    	fullUrlBase,
-		portString:         portString,
-		certFile:       	certFile,
-		keyFile:        	keyFile,
-		log:            	log,
+		PortString:         portString,
+		CertFile:       	certFile,
+		KeyFile:        	keyFile,
 	}
 }
 
@@ -112,23 +111,26 @@ func createCoreApi(confFile *confFile, vada v.VadaClient, log golog.Log) core.Co
 	} else if dur, err := time.ParseDuration(confFile.CoreApi.StatusCheckTimeout); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
+	} else if coreApi, err := core.NewSqlCoreApi(db, vada, dur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
+		log.Critical("Failed to create CoreApi: %v", err)
+		panic(err)
 	} else {
-		return core.NewSqlCoreApi(db, vada, dur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log)
+		return coreApi
 	}
 }
 
 func createSessionGetter(confFile *confFile, log golog.Log) session.SessionGetter {
-	if len(confFile.Session.SessionKeyPairs) == 0 || len(confFile.Session.SessionKeyPairs) % 2 != 0 {
+	if len(confFile.Session.KeyPairs) == 0 || len(confFile.Session.KeyPairs) % 2 != 0 {
 		err := errors.New("StormConf WebConf len(SessionKeyPairs) must be a POSITIVE EVEN integer")
-		log.Critical(err)
+		log.Critical("Failed to create sessionGetter: %v", err)
 		panic(err)
 	}
-	sessionKeyPairs := make([][]byte, 0, len(confFile.Session.SessionKeyPairs))
-	for _, str := range confFile.Session.SessionKeyPairs {
+	sessionKeyPairs := make([][]byte, 0, len(confFile.Session.KeyPairs))
+	for _, str := range confFile.Session.KeyPairs {
 		bytes := []byte(str)
 		if len(bytes) != 32 {
 			err := errors.New("StormConf WebConf len(SessionKey) must be 32")
-			log.Critical(err)
+			log.Critical("Failed to create sessionGetter: %v", err)
 			panic(err)
 		}
 		sessionKeyPairs = append(sessionKeyPairs, []byte(str))
@@ -137,7 +139,7 @@ func createSessionGetter(confFile *confFile, log golog.Log) session.SessionGette
 		log.Critical("Failed to create SessionGetter: %v", err)
 		panic(err)
 	} else {
-		return session.NewCookieSessionGetter(sessionKeyPairs, confFile.Session.SessionMaxAge, confFile.Session.SessionName, confFile.Session.MaxRecentSheetCount, dur)
+		return session.NewCookieSessionGetter(sessionKeyPairs, confFile.Session.MaxAge, confFile.Session.Name, confFile.Session.MaxRecentSheetCount, dur)
 	}
 
 }

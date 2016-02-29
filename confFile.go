@@ -34,9 +34,9 @@ type coreApiConf struct {
 }
 
 type sessionConf struct{
-	SessionName     string   `json:"sessionName"`     // "mh"
-	SessionMaxAge   int      `json:"sessionMaxAge"`   // 432000
-	SessionKeyPairs []string `json:"sessionKeyPairs"` // ["abcdefghijklmnopqrstuvwxyzabcdef", "abcdefghijklmnopqrstuvwxyzabcdef"]
+	Name string   `json:"name"`     // "mh"
+	MaxAge int      `json:"maxAge"`   // 432000
+	KeyPairs []string `json:"keyPairs"` // ["abcdefghijklmnopqrstuvwxyzabcdef", "abcdefghijklmnopqrstuvwxyzabcdef"]
 	MaxRecentSheetCount int `json:"maxRecentSheetCount"` // 25
 	RecentSheetAccessExpiration string `json:"recentSheetAccessExpiration"` // "5m"
 }
