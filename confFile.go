@@ -23,8 +23,7 @@ type vadaConf struct {
 }
 
 type sqlConf struct {
-	Driver string `json:"driver"`
-	Connection string `json:"connection"`
+	MySqlConnection string `json:"mySqlconnection"`
 }
 
 type coreApiConf struct {

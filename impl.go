@@ -11,7 +11,6 @@ import (
 	v "github.com/modelhub/vada"
 	"github.com/modelhub/core"
 	"github.com/modelhub/wall"
-	"database/sql"
 	"github.com/modelhub/session"
 	"strconv"
 	"time"
@@ -38,7 +37,7 @@ func GetAppConf() *conf {
 	keyFile := createKeyFilePath(confFile)
 
 	return &conf{
-		RootMux: 	wall,
+		Wall: 	wall,
 		Log: log,
 		FullUrlBase:    	fullUrlBase,
 		PortString:         portString,
@@ -61,7 +60,7 @@ func readConfFile(log golog.Log) *confFile {
 		panic(err)
 	}
 
-	log.Info("conf.json: %v", confFile)
+	log.Info("conf.json: %#v", confFile)
 	return confFile
 }
 
@@ -105,13 +104,10 @@ func createCoreApi(confFile *confFile, vada v.VadaClient, log golog.Log) core.Co
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	}
-	if db, err := sql.Open(confFile.Sql.Driver, confFile.Sql.Connection); err != nil {
+	if dur, err := time.ParseDuration(confFile.CoreApi.StatusCheckTimeout); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
-	} else if dur, err := time.ParseDuration(confFile.CoreApi.StatusCheckTimeout); err != nil {
-		log.Critical("Failed to create CoreApi: %v", err)
-		panic(err)
-	} else if coreApi, err := core.NewSqlCoreApi(db, vada, dur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
+	} else if coreApi, err := core.NewSqlCoreApi(confFile.Sql.MySqlConnection, vada, dur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	} else {
@@ -187,7 +183,7 @@ func createFullUrlBase(confFile *confFile) string {
 }
 
 type conf struct {
-	RootMux			  *http.ServeMux
+	Wall *http.ServeMux
 	Log 			  golog.Log
 	FullUrlBase		  string
 	PortString		  string
