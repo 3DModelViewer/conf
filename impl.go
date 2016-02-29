@@ -39,6 +39,7 @@ func GetAppConf() *conf {
 
 	return &conf{
 		RootMux: 	wall,
+		Log: log,
 		FullUrlBase:    	fullUrlBase,
 		portString:         portString,
 		certFile:       	certFile,
@@ -185,6 +186,7 @@ func createFullUrlBase(confFile *confFile) string {
 
 type conf struct {
 	RootMux			  *http.ServeMux
+	Log 			  golog.Log
 	FullUrlBase		  string
 	PortString		  string
 	CertFile          string
