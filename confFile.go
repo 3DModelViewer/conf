@@ -46,5 +46,6 @@ type webConf struct {
 	PublicDir       []string `json:"publicDir"`       // ["relative", "file", "path", "segments"]
 	CertFile        []string `json:"certFile"`        // ["relative", "file", "path", "segments"]
 	KeyFile         []string `json:"keyFile"`         // ["relative", "file", "path", "segments"]
+	CsrfAuthKey		string `json:csrfAuthKey`		// a hex string representing 32 bytes "56b3ae20971fcee02882e5ec01882611690703a4814e687d9aad4bfc0f9a38c3"
 	OpenIdProvider  string	`json:"openIdProvider"`  // "https://accounts.autodesk.com"
 }

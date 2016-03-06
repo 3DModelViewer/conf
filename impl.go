@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 	"github.com/modelhub/rest"
+	"encoding/hex"
 )
 
 var(
@@ -123,13 +124,17 @@ func createSessionGetter(confFile *confFile, log golog.Log) session.SessionGette
 	}
 	sessionKeyPairs := make([][]byte, 0, len(confFile.Session.KeyPairs))
 	for _, str := range confFile.Session.KeyPairs {
-		bytes := []byte(str)
-		if len(bytes) != 32 {
-			err := errors.New("StormConf WebConf len(SessionKey) must be 32")
+		if bytes, err := hex.DecodeString(str); err != nil {
 			log.Critical("Failed to create sessionGetter: %v", err)
 			panic(err)
+		} else {
+			if len(bytes) != 32 {
+				err := errors.New("StormConf WebConf len(SessionKey) must be 32")
+				log.Critical("Failed to create sessionGetter: %v", err)
+				panic(err)
+			}
+			sessionKeyPairs = append(sessionKeyPairs, bytes)
 		}
-		sessionKeyPairs = append(sessionKeyPairs, []byte(str))
 	}
 	if dur, err := time.ParseDuration(confFile.Session.RecentSheetAccessExpiration); err != nil {
 		log.Critical("Failed to create SessionGetter: %v", err)
@@ -144,8 +149,26 @@ func createRestApi(coreApi core.CoreApi, sessionGetter session.SessionGetter, va
 	return rest.NewRestApi(coreApi, sessionGetter, vada, log)
 }
 
-func createWall(confFile *confFile, coreApi core.CoreApi, restApi *http.ServeMux, sessionGetter session.SessionGetter, fullUrlBase string, vada v.VadaClient, log golog.Log) *http.ServeMux {
-	return wall.NewWall(coreApi, restApi, sessionGetter, confFile.Web.OpenIdProvider, fullUrlBase, fpj(wd, fpj(confFile.Web.PublicDir...)))
+func createWall(confFile *confFile, coreApi core.CoreApi, restApi *http.ServeMux, sessionGetter session.SessionGetter, fullUrlBase string, vada v.VadaClient, log golog.Log) http.Handler {
+	if csrfAuthKey, err := hex.DecodeString(confFile.Web.CsrfAuthKey); err != nil {
+		log.Critical("Failed to create wall: %v", err)
+		panic(err)
+	} else if len(csrfAuthKey) != 32 {
+		err := errors.New("StormConf WebConf len(CsrfAuthKey) must be 32")
+		log.Critical("Failed to create wall: %v", err)
+		panic(err)
+	} else {
+		isOverSecureConnection := false
+		if len(confFile.Web.CertFile) != 0 && len(confFile.Web.KeyFile) != 0 {
+			isOverSecureConnection = true
+		}
+		if wall, err := wall.NewWall(coreApi, restApi, sessionGetter, confFile.Web.OpenIdProvider, fullUrlBase, csrfAuthKey, isOverSecureConnection, fpj(wd, fpj(confFile.Web.PublicDir...))); err != nil {
+			log.Critical("Failed to create wall: %v", err)
+			panic(err)
+		} else {
+			return wall
+		}
+	}
 }
 
 func createCertFilePath(confFile *confFile) string {
@@ -183,7 +206,7 @@ func createFullUrlBase(confFile *confFile) string {
 }
 
 type conf struct {
-	Wall *http.ServeMux
+	Wall http.Handler
 	Log 			  golog.Log
 	FullUrlBase		  string
 	PortString		  string
