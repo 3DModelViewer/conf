@@ -1,26 +1,26 @@
 package conf
 
 import (
-	"os"
-	"path/filepath"
-	"net/http"
-	"github.com/robsix/golog"
-	"io/ioutil"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
-	v "github.com/modelhub/vada"
 	"github.com/modelhub/core"
-	"github.com/modelhub/wall"
+	"github.com/modelhub/rest"
 	"github.com/modelhub/session"
+	v "github.com/modelhub/vada"
+	"github.com/modelhub/wall"
+	"github.com/robsix/golog"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
-	"github.com/modelhub/rest"
-	"encoding/hex"
 )
 
-var(
+var (
 	wd, _ = os.Getwd()
-	fpj = filepath.Join
+	fpj   = filepath.Join
 )
 
 func GetAppConf() *conf {
@@ -30,7 +30,7 @@ func GetAppConf() *conf {
 	vada := createVadaClient(confFile, log)
 	coreApi := createCoreApi(confFile, vada, log)
 	sessionGetter := createSessionGetter(confFile, log)
-	restApi := createRestApi(coreApi, sessionGetter, vada, log)
+	restApi := createRestApi(confFile, coreApi, sessionGetter, vada, log)
 	fullUrlBase := createFullUrlBase(confFile)
 	wall := createWall(confFile, coreApi, restApi, sessionGetter, fullUrlBase, vada, log)
 	portString := createPortString(confFile)
@@ -38,12 +38,12 @@ func GetAppConf() *conf {
 	keyFile := createKeyFilePath(confFile)
 
 	return &conf{
-		Wall: 	wall,
-		Log: log,
-		FullUrlBase:    	fullUrlBase,
-		PortString:         portString,
-		CertFile:       	certFile,
-		KeyFile:        	keyFile,
+		Wall:        wall,
+		Log:         log,
+		FullUrlBase: fullUrlBase,
+		PortString:  portString,
+		CertFile:    certFile,
+		KeyFile:     keyFile,
 	}
 }
 
@@ -117,7 +117,7 @@ func createCoreApi(confFile *confFile, vada v.VadaClient, log golog.Log) core.Co
 }
 
 func createSessionGetter(confFile *confFile, log golog.Log) session.SessionGetter {
-	if len(confFile.Session.KeyPairs) == 0 || len(confFile.Session.KeyPairs) % 2 != 0 {
+	if len(confFile.Session.KeyPairs) == 0 || len(confFile.Session.KeyPairs)%2 != 0 {
 		err := errors.New("StormConf WebConf len(SessionKeyPairs) must be a POSITIVE EVEN integer")
 		log.Critical("Failed to create sessionGetter: %v", err)
 		panic(err)
@@ -145,8 +145,13 @@ func createSessionGetter(confFile *confFile, log golog.Log) session.SessionGette
 
 }
 
-func createRestApi(coreApi core.CoreApi, sessionGetter session.SessionGetter, vada v.VadaClient, log golog.Log) *http.ServeMux {
-	return rest.NewRestApi(coreApi, sessionGetter, vada, log)
+func createRestApi(confFile *confFile, coreApi core.CoreApi, sessionGetter session.SessionGetter, vada v.VadaClient, log golog.Log) *http.ServeMux {
+	if dur, err := time.ParseDuration(confFile.RestApi.GetLatestVersionsTimeOut); err != nil {
+		log.Critical("Failed to create RestApi: %v", err)
+		panic(err)
+	} else {
+		return rest.NewRestApi(coreApi, sessionGetter, dur, vada, log)
+	}
 }
 
 func createWall(confFile *confFile, coreApi core.CoreApi, restApi *http.ServeMux, sessionGetter session.SessionGetter, fullUrlBase string, vada v.VadaClient, log golog.Log) http.Handler {
@@ -206,10 +211,10 @@ func createFullUrlBase(confFile *confFile) string {
 }
 
 type conf struct {
-	Wall http.Handler
-	Log 			  golog.Log
-	FullUrlBase		  string
-	PortString		  string
-	CertFile          string
-	KeyFile           string
+	Wall        http.Handler
+	Log         golog.Log
+	FullUrlBase string
+	PortString  string
+	CertFile    string
+	KeyFile     string
 }
