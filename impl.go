@@ -105,10 +105,13 @@ func createCoreApi(confFile *confFile, vada v.VadaClient, log golog.Log) core.Co
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	}
-	if dur, err := time.ParseDuration(confFile.CoreApi.StatusCheckTimeout); err != nil {
+	if statusCheckTimeoutDur, err := time.ParseDuration(confFile.CoreApi.StatusCheckTimeout); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
-	} else if coreApi, err := core.NewSqlCoreApi(confFile.Sql.MySqlConnection, vada, dur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
+	} else if batchGetTimeoutDur, err := time.ParseDuration(confFile.CoreApi.BatchGetTimeout); err != nil {
+		log.Critical("Failed to create CoreApi: %v", err)
+		panic(err)
+	} else if coreApi, err := core.NewSqlCoreApi(confFile.Sql.MySqlConnection, vada, statusCheckTimeoutDur, batchGetTimeoutDur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	} else {
@@ -146,12 +149,7 @@ func createSessionGetter(confFile *confFile, log golog.Log) session.SessionGette
 }
 
 func createRestApi(confFile *confFile, coreApi core.CoreApi, sessionGetter session.SessionGetter, vada v.VadaClient, log golog.Log) *http.ServeMux {
-	if dur, err := time.ParseDuration(confFile.RestApi.GetLatestVersionsTimeOut); err != nil {
-		log.Critical("Failed to create RestApi: %v", err)
-		panic(err)
-	} else {
-		return rest.NewRestApi(coreApi, sessionGetter, dur, vada, log)
-	}
+	return rest.NewRestApi(coreApi, sessionGetter, vada, log)
 }
 
 func createWall(confFile *confFile, coreApi core.CoreApi, restApi *http.ServeMux, sessionGetter session.SessionGetter, fullUrlBase string, vada v.VadaClient, log golog.Log) http.Handler {

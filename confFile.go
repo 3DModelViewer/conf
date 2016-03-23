@@ -7,7 +7,6 @@ type confFile struct {
 	CoreApi coreApiConf `json:"coreApi"`
 	Session sessionConf `json:"session"`
 	Web     webConf     `json:"web"`
-	RestApi restApiConf `json:"restApi"`
 }
 
 type logConf struct {
@@ -29,6 +28,7 @@ type sqlConf struct {
 
 type coreApiConf struct {
 	StatusCheckTimeout string `json:"statusCheckTimeout"` // "5s"
+	BatchGetTimeout string `json:"batchGetTimeout"` // "5s"
 	OssBucketPrefix    string `json:"ossBucketPrefix"`    // "modelhub_01"
 	OssBucketPolicy    string `json:"ossBucketPolicy"`    // "transient"/"temporary"/"persistent"
 }
@@ -49,8 +49,4 @@ type webConf struct {
 	KeyFile        []string `json:"keyFile"`        // ["relative", "file", "path", "segments"]
 	CsrfAuthKey    string   `json:csrfAuthKey`      // a hex string representing 32 bytes "56b3ae20971fcee02882e5ec01882611690703a4814e687d9aad4bfc0f9a38c3"
 	OpenIdProvider string   `json:"openIdProvider"` // "https://accounts.autodesk.com"
-}
-
-type restApiConf struct {
-	GetLatestVersionsTimeOut string `json:"getLatestVersionsTimeOut"` // "5s
 }
