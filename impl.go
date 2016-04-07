@@ -165,7 +165,7 @@ func createWall(confFile *confFile, coreApi core.CoreApi, restApi *http.ServeMux
 		if len(confFile.Web.CertFile) != 0 && len(confFile.Web.KeyFile) != 0 {
 			isOverSecureConnection = true
 		}
-		if wall, err := wall.NewWall(coreApi, restApi, sessionGetter, confFile.Web.OpenIdProvider, fullUrlBase, csrfAuthKey, isOverSecureConnection, fpj(wd, fpj(confFile.Web.PublicDir...))); err != nil {
+		if wall, err := wall.NewWall(coreApi, restApi, sessionGetter, confFile.Web.OpenIdProvider, fullUrlBase, csrfAuthKey, confFile.Session.MaxAge, isOverSecureConnection, fpj(wd, fpj(confFile.Web.PublicDir...))); err != nil {
 			log.Critical("Failed to create wall: %v", err)
 			panic(err)
 		} else {
