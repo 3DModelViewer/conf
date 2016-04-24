@@ -3,6 +3,7 @@ package conf
 type confFile struct {
 	Log     logConf     `json:"log"`
 	Vada    vadaConf    `json:"vada"`
+	Caca    cacaConf    `json:"caca"`
 	Sql     sqlConf     `json:"sql"`
 	CoreApi coreApiConf `json:"coreApi"`
 	Session sessionConf `json:"session"`
@@ -22,15 +23,19 @@ type vadaConf struct {
 	Secret string `json:"secret"` // "Xc900b546fdb941f" //TODO need to add encryption for these at some point
 }
 
+type cacaConf struct {
+	Host   string `json:"host"`   //"http://shflinux03:4000"
+}
+
 type sqlConf struct {
 	MySqlConnection string `json:"mySqlconnection"`
 }
 
 type coreApiConf struct {
-	StatusCheckTimeout string `json:"statusCheckTimeout"` // "5s"
-	BatchGetTimeout string `json:"batchGetTimeout"` // "5s"
-	OssBucketPrefix    string `json:"ossBucketPrefix"`    // "modelhub_01"
-	OssBucketPolicy    string `json:"ossBucketPolicy"`    // "transient"/"temporary"/"persistent"
+	SubtaskTimeout  string `json:"subtaskTimeout"` // "5s"
+	BatchGetTimeout string `json:"batchGetTimeout"`    // "5s"
+	OssBucketPrefix string `json:"ossBucketPrefix"`    // "modelhub_01"
+	OssBucketPolicy string `json:"ossBucketPolicy"`    // "transient"/"temporary"/"persistent"
 }
 
 type sessionConf struct {

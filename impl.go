@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+	"github.com/modelhub/caca"
 )
 
 var (
@@ -28,7 +29,8 @@ func GetAppConf() *conf {
 	confFile := readConfFile(log)
 	log = createLog(confFile, log)
 	vada := createVadaClient(confFile, log)
-	coreApi := createCoreApi(confFile, vada, log)
+	caca := createCacaClient(confFile, log)
+	coreApi := createCoreApi(confFile, vada, caca, log)
 	sessionGetter := createSessionGetter(confFile, log)
 	restApi := createRestApi(confFile, coreApi, sessionGetter, vada, log)
 	fullUrlBase := createFullUrlBase(confFile)
@@ -91,7 +93,11 @@ func createVadaClient(confFile *confFile, log golog.Log) v.VadaClient {
 	return v.NewVadaClient(confFile.Vada.Host, confFile.Vada.Key, confFile.Vada.Secret, log)
 }
 
-func createCoreApi(confFile *confFile, vada v.VadaClient, log golog.Log) core.CoreApi {
+func createCacaClient(confFile *confFile, log golog.Log) caca.CacaClient {
+	return caca.NewCacaClient(confFile.Caca.Host, log)
+}
+
+func createCoreApi(confFile *confFile, vada v.VadaClient, caca caca.CacaClient, log golog.Log) core.CoreApi {
 	var bucketPolicy v.BucketPolicy
 	switch confFile.CoreApi.OssBucketPolicy {
 	case "transient":
@@ -105,13 +111,13 @@ func createCoreApi(confFile *confFile, vada v.VadaClient, log golog.Log) core.Co
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	}
-	if statusCheckTimeoutDur, err := time.ParseDuration(confFile.CoreApi.StatusCheckTimeout); err != nil {
+	if subtaskTimeoutDur, err := time.ParseDuration(confFile.CoreApi.SubtaskTimeout); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	} else if batchGetTimeoutDur, err := time.ParseDuration(confFile.CoreApi.BatchGetTimeout); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
-	} else if coreApi, err := core.NewSqlCoreApi(confFile.Sql.MySqlConnection, vada, statusCheckTimeoutDur, batchGetTimeoutDur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
+	} else if coreApi, err := core.NewSqlCoreApi(confFile.Sql.MySqlConnection, vada, caca, subtaskTimeoutDur, batchGetTimeoutDur, confFile.CoreApi.OssBucketPrefix, bucketPolicy, log); err != nil {
 		log.Critical("Failed to create CoreApi: %v", err)
 		panic(err)
 	} else {
