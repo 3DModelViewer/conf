@@ -94,7 +94,11 @@ func createVadaClient(confFile *confFile, log golog.Log) v.VadaClient {
 }
 
 func createCacaClient(confFile *confFile, log golog.Log) caca.CacaClient {
-	return caca.NewCacaClient(confFile.Caca.Host, log)
+	if confFile.Caca.Enabled {
+		return caca.NewCacaClient(confFile.Caca.Host, log)
+	} else {
+		return nil
+	}
 }
 
 func createCoreApi(confFile *confFile, vada v.VadaClient, caca caca.CacaClient, log golog.Log) core.CoreApi {

@@ -24,6 +24,7 @@ type vadaConf struct {
 }
 
 type cacaConf struct {
+	Enabled bool `json:"enabled"`
 	Host   string `json:"host"`   //"http://shflinux03:4000"
 }
 
@@ -32,7 +33,7 @@ type sqlConf struct {
 }
 
 type coreApiConf struct {
-	SubtaskTimeout  string `json:"subtaskTimeout"` // "5s"
+	SubtaskTimeout  string `json:"subtaskTimeout"` 	   // "5s"
 	BatchGetTimeout string `json:"batchGetTimeout"`    // "5s"
 	OssBucketPrefix string `json:"ossBucketPrefix"`    // "modelhub_01"
 	OssBucketPolicy string `json:"ossBucketPolicy"`    // "transient"/"temporary"/"persistent"
